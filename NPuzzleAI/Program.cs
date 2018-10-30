@@ -248,7 +248,6 @@ namespace NPuzzleAI
 
     class PriorityQueue
     {
-        //List<Puzzle> repeatedStates = new List<Puzzle>();
         LinkedList<Node> nodes = new LinkedList<Node>();
 
         public bool Empty()
@@ -258,15 +257,6 @@ namespace NPuzzleAI
 
         public void Enque(Node node)
         {
-            //for(int i = 0; i < repeatedStates.Count; ++i)
-            //{
-            //    if (repeatedStates[i].Equals(node.puzzle))
-            //    {
-            //        return;
-            //    }
-            //}
-
-            //repeatedStates.Add(node.puzzle);
 
             for(LinkedListNode<Node> val = nodes.First; val != null; val = val.Next)
             {
@@ -303,15 +293,60 @@ namespace NPuzzleAI
             if(input.KeyChar == '1')
             {
                 puzzle = new int[3, 3] {
-                    { 2, 3, 5},
-                    { 4, 1, 8},
-                    { 0, 7, 6} };
+                    { 0, 1, 3},
+                    { 4, 2, 5},
+                    { 7, 8, 6} };
             }
             else if(input.KeyChar == '2')
             {
-                Console.WriteLine("Enter your puzzle, use a zero to represent the blank");
+                Console.WriteLine("\nEnter your puzzle, use a zero to represent the blank");
                 Console.WriteLine("Enter the first row, use space or tabs between numbers");
                 string line1 = Console.ReadLine();
+                string[] line = line1.Split(' ');
+                for(int i = 0; i < line.Length; ++i)
+                {
+                    try
+                    {
+                        puzzle[0, i] = Convert.ToInt32(line[i]);
+                    }
+                    catch
+                    {
+                        Console.WriteLine("Invalid Input");
+                        goto Prompt;
+                    }
+                }
+
+                Console.WriteLine("Enter the second row, use space or tabs between numbers");
+                string line2 = Console.ReadLine();
+                line = line2.Split(' ');
+                for (int i = 0; i < line.Length; ++i)
+                {
+                    try
+                    {
+                        puzzle[1, i] = Convert.ToInt32(line[i]);
+                    }
+                    catch
+                    {
+                        Console.WriteLine("Invalid Input");
+                        goto Prompt;
+                    }
+                }
+
+                Console.WriteLine("Enter the third row, use space or tabs between numbers");
+                string line3 = Console.ReadLine();
+                line = line3.Split(' ');
+                for (int i = 0; i < line.Length; ++i)
+                {
+                    try
+                    {
+                        puzzle[2, i] = Convert.ToInt32(line[i]);
+                    }
+                    catch
+                    {
+                        Console.WriteLine("Invalid Input");
+                        goto Prompt;
+                    }
+                }
             }
             else
             {
@@ -363,9 +398,9 @@ namespace NPuzzleAI
 
                 if (node.puzzle.GoalStateFound())
                 {
-                    Console.WriteLine("Goal State Found:");
-                    Console.ReadKey();
-                    return;
+                    Console.WriteLine("Goal State Found, Press any key to restart.");
+                    Console.ReadKey(true);
+                    Program.Main(new string[] { });
                 }
 
                 Puzzle[] children = node.puzzle.GetPossibleChildren();
