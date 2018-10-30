@@ -44,6 +44,21 @@ namespace NPuzzleAI
             lhs = rhs;
             rhs = temp;
         }
+
+        public static bool Compare(this int[,] arr, int[,] target)
+        {
+            bool equal = true;
+
+            for (int i = 0; i < arr.GetLength(0); ++i)
+            {
+                for (int j = 0; j < arr.GetLength(1); ++j)
+                {
+                    equal &= (arr[i, j] == target[i, j]);
+                }
+            }
+
+            return equal;
+        }
     }
 
     public static class HeuristicFunctions
@@ -122,7 +137,7 @@ namespace NPuzzleAI
     {
         private int xLength;
         private int yLength;
-        private int[,] boardState;
+        public int[,] boardState;
         private int[,] goalState;
         private Func<int[,], int[,], int> heuristic;
 
@@ -140,7 +155,7 @@ namespace NPuzzleAI
             {
                 for(int j = 0; j < yLength; ++j)
                 {
-                    goalState[i, j] = (i * xLength) + j;
+                    goalState[i, j] = (i * xLength) + j + 1;
                 }
             }
             goalState[xLength - 1, yLength - 1] = 0;
@@ -152,25 +167,25 @@ namespace NPuzzleAI
             int[] index = boardState.FindIndexOf(0);
             if(index[0] > 0)
             {
-                int[,] newBoardState = boardState;
+                int[,] newBoardState = boardState.Clone() as int[,];
                 Extensions.Swap(ref newBoardState[index[0], index[1]], ref newBoardState[index[0] - 1, index[1]]);
                 puzzles.Add(new Puzzle(newBoardState, heuristic));
             }
             if(index[0] < xLength - 1)
             {
-                int[,] newBoardState = boardState;
+                int[,] newBoardState = boardState.Clone() as int[,];
                 Extensions.Swap(ref newBoardState[index[0], index[1]], ref newBoardState[index[0] + 1, index[1]]);
                 puzzles.Add(new Puzzle(newBoardState, heuristic));
             }
             if(index[1] > 0)
             {
-                int[,] newBoardState = boardState;
+                int[,] newBoardState = boardState.Clone() as int[,];
                 Extensions.Swap(ref newBoardState[index[0], index[1]], ref newBoardState[index[0], index[1] - 1]);
                 puzzles.Add(new Puzzle(newBoardState, heuristic));
             }
             if(index[1] < yLength - 1)
             {
-                int[,] newBoardState = boardState;
+                int[,] newBoardState = boardState.Clone() as int[,];
                 Extensions.Swap(ref newBoardState[index[0], index[1]], ref newBoardState[index[0], index[1] + 1]);
                 puzzles.Add(new Puzzle(newBoardState, heuristic));
             }
@@ -185,7 +200,12 @@ namespace NPuzzleAI
 
         public bool GoalStateFound()
         {
-            return boardState == goalState;
+            return boardState.Compare(goalState);
+        }
+
+        public bool Equals(Puzzle puzzle)
+        {
+            return boardState.Compare(puzzle.boardState);
         }
 
         public void Print()
@@ -228,21 +248,32 @@ namespace NPuzzleAI
 
     class PriorityQueue
     {
+        //List<Puzzle> repeatedStates = new List<Puzzle>();
         LinkedList<Node> nodes = new LinkedList<Node>();
 
         public bool Empty()
         {
-            return nodes.Count > 0;
+            return nodes.Count == 0;
         }
 
         public void Enque(Node node)
         {
-            for(LinkedListNode<Node> val = nodes.First; val.Next != null; val = val.Next)
+            //for(int i = 0; i < repeatedStates.Count; ++i)
+            //{
+            //    if (repeatedStates[i].Equals(node.puzzle))
+            //    {
+            //        return;
+            //    }
+            //}
+
+            //repeatedStates.Add(node.puzzle);
+
+            for(LinkedListNode<Node> val = nodes.First; val != null; val = val.Next)
             {
                 if(val.Value.getWeight() > node.getWeight())
                 {
                     nodes.AddBefore(val, node);
-                    break;
+                    return;
                 }
             }
 
@@ -272,9 +303,9 @@ namespace NPuzzleAI
             if(input.KeyChar == '1')
             {
                 puzzle = new int[3, 3] {
-                    { 5, 6, 7},
-                    { 4, 0, 8},
-                    { 3, 2, 1} };
+                    { 2, 3, 5},
+                    { 4, 1, 8},
+                    { 0, 7, 6} };
             }
             else if(input.KeyChar == '2')
             {
@@ -315,6 +346,7 @@ namespace NPuzzleAI
         {
             PriorityQueue queue = new PriorityQueue();
             Puzzle initPuzzle = new Puzzle(puzzle, heuristic);
+
             Node firstNode = new Node(0, initPuzzle.GetHeuristicValue(), initPuzzle);
             queue.Enque(firstNode);
 
@@ -332,6 +364,7 @@ namespace NPuzzleAI
                 if (node.puzzle.GoalStateFound())
                 {
                     Console.WriteLine("Goal State Found:");
+                    Console.ReadKey();
                     return;
                 }
 
