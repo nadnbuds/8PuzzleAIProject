@@ -182,14 +182,165 @@ namespace NPuzzleAI
         {
             return heuristic.Invoke(boardState, goalState);
         }
+
+        public bool GoalStateFound()
+        {
+            return boardState == goalState;
+        }
+
+        public void Print()
+        {
+            for(int i = 0; i < xLength; ++i)
+            {
+                for(int j = 0; j < yLength; ++j)
+                {
+                    Console.Write($"{boardState[i, j]} ");
+                }
+
+                Console.Write("\n");
+            }
+        }
+    }
+
+    class Node
+    {
+        public int g;
+        public int h;
+        public Puzzle puzzle;
+
+        public Node(int g, int h, Puzzle puzzle)
+        {
+            this.g = g;
+            this.h = h;
+            this.puzzle = puzzle;
+        }
+
+        public Puzzle[] GetChildren()
+        {
+            return puzzle.GetPossibleChildren();
+        }
+
+        public int getWeight()
+        {
+            return g + h;
+        }
+    }
+
+    class PriorityQueue
+    {
+        LinkedList<Node> nodes = new LinkedList<Node>();
+
+        public bool Empty()
+        {
+            return nodes.Count > 0;
+        }
+
+        public void Enque(Node node)
+        {
+            for(LinkedListNode<Node> val = nodes.First; val.Next != null; val = val.Next)
+            {
+                if(val.Value.getWeight() > node.getWeight())
+                {
+                    nodes.AddBefore(val, node);
+                    break;
+                }
+            }
+
+            nodes.AddLast(node);
+        }
+
+        public Node Dequeue()
+        {
+            Node node = nodes.First.Value;
+            nodes.RemoveFirst();
+
+            return node;
+        }
     }
 
     class Program
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello World");
-            Console.ReadLine();
+            int[,] puzzle = new int[3, 3];
+
+            Prompt:
+            Console.WriteLine("Welcome to Lorenzo Alamillo's 8-Puzzle Solver." +
+                "Type \"1\" to use a default puzzle, or \"2\" to enter your own puzzle");
+            ConsoleKeyInfo input = Console.ReadKey();
+
+            if(input.KeyChar == '1')
+            {
+                puzzle = new int[3, 3] {
+                    { 5, 6, 7},
+                    { 4, 0, 8},
+                    { 3, 2, 1} };
+            }
+            else if(input.KeyChar == '2')
+            {
+                Console.WriteLine("Enter your puzzle, use a zero to represent the blank");
+                Console.WriteLine("Enter the first row, use space or tabs between numbers");
+                string line1 = Console.ReadLine();
+            }
+            else
+            {
+                Console.WriteLine("Error, invalid input");
+                goto Prompt;
+            }
+
+            Console.WriteLine("Enter your choice of algorithm \n" +
+                "1: Uniform Cost Search \n" +
+                "2: A* with Misplaced Tile Heuristic \n" +
+                "3: A* with Manhattan distance Heuristic");
+            Char key = Console.ReadKey().KeyChar;
+
+            switch(key)
+            {
+                case '1':
+                    GeneralSearch(puzzle, HeuristicFunctions.UniformCost);
+                    break;
+                case '2':
+                    GeneralSearch(puzzle, HeuristicFunctions.MisplacedTileHeuristic);
+                    break;
+                case '3':
+                    GeneralSearch(puzzle, HeuristicFunctions.ManhattanHeuristic);
+                    break;
+                default:
+                    Console.WriteLine("Invalid input");
+                    goto Prompt;
+            }
+        }
+
+        public static void GeneralSearch(int[,] puzzle, Func<int[,], int[,], int> heuristic)
+        {
+            PriorityQueue queue = new PriorityQueue();
+            Puzzle initPuzzle = new Puzzle(puzzle, heuristic);
+            Node firstNode = new Node(0, initPuzzle.GetHeuristicValue(), initPuzzle);
+            queue.Enque(firstNode);
+
+            while(true)
+            {
+                if(queue.Empty())
+                {
+                    return;
+                }
+
+                Node node = queue.Dequeue();
+                Console.WriteLine($"Expanding Node with g(n) = {node.g} and h(n) = {node.h}");
+                node.puzzle.Print();
+
+                if (node.puzzle.GoalStateFound())
+                {
+                    Console.WriteLine("Goal State Found:");
+                    return;
+                }
+
+                Puzzle[] children = node.puzzle.GetPossibleChildren();
+                for(int i = 0; i < children.Length; ++i)
+                {
+                    queue.Enque(new Node(node.g + 1, children[i].GetHeuristicValue(), children[i]));
+                }
+            }
         }
     }
 }
