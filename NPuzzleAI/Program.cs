@@ -248,6 +248,7 @@ namespace NPuzzleAI
 
     class PriorityQueue
     {
+        List<Puzzle> repeatedStates = new List<Puzzle>();
         LinkedList<Node> nodes = new LinkedList<Node>();
 
         public bool Empty()
@@ -257,8 +258,17 @@ namespace NPuzzleAI
 
         public void Enque(Node node)
         {
+            for (int i = 0; i < repeatedStates.Count; ++i)
+            {
+                if (repeatedStates[i].Equals(node.puzzle))
+                {
+                    return;
+                }
+            }
 
-            for(LinkedListNode<Node> val = nodes.First; val != null; val = val.Next)
+            repeatedStates.Add(node.puzzle);
+
+            for (LinkedListNode<Node> val = nodes.First; val != null; val = val.Next)
             {
                 if(val.Value.getWeight() > node.getWeight())
                 {
