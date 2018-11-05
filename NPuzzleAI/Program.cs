@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace NPuzzleAI
 {
@@ -13,73 +10,13 @@ namespace NPuzzleAI
         Manhattan
     }
 
-    public static class Extensions
-    {
-        /// <summary>
-        /// Finds index of target
-        /// </summary>
-        /// <param name="arr"></param>
-        /// <param name="target"></param>
-        /// <returns>Array of the index</returns>
-        public static int[] FindIndexOf(this int[,] arr, int target)
-        {
-            for (int i = 0; i < arr.GetLength(0); ++i)
-            {
-                for (int j = 0; j < arr.GetLength(1); ++j)
-                {
-                    if(arr[i, j] == target)
-                    {
-                        return new int[]{ i, j };
-                    }
-                }
-            }
-
-            return new int[] { -1, -1 };
-        }
-
-        public static void Swap<T>(ref T lhs, ref T rhs)
-        {
-            T temp;
-            temp = lhs;
-            lhs = rhs;
-            rhs = temp;
-        }
-
-        public static bool Compare(this int[,] arr, int[,] target)
-        {
-            bool equal = true;
-
-            for (int i = 0; i < arr.GetLength(0); ++i)
-            {
-                for (int j = 0; j < arr.GetLength(1); ++j)
-                {
-                    equal &= (arr[i, j] == target[i, j]);
-                }
-            }
-
-            return equal;
-        }
-    }
-
     public static class HeuristicFunctions
     {
-        /// <summary>
-        /// Returns 0 as Heuristic
-        /// </summary>
-        /// <param name="boardState"></param>
-        /// <param name="goalState"></param>
-        /// <returns></returns>
         public static int UniformCost(int[,] boardState, int[,] goalState)
         {
             return 0;
         }
 
-        /// <summary>
-        /// Iterates through the board and finds all non-matching goalstate positions
-        /// </summary>
-        /// <param name="boardState"></param>
-        /// <param name="goalState"></param>
-        /// <returns>Total Misplaced Tiles</returns>
         public static int MisplacedTileHeuristic(int[,] boardState, int[,] goalState)
         {
             int misplacedTiles = 0;
@@ -100,12 +37,6 @@ namespace NPuzzleAI
 
         }
 
-        /// <summary>
-        /// Calculates total minimum distance to achieve Goal State
-        /// </summary>
-        /// <param name="boardState"></param>
-        /// <param name="goalState"></param>
-        /// <returns>Total Distance to Goal State</returns>
         public static int ManhattanHeuristic(int[,] boardState, int[,] goalState)
         {
             int totalDistance = 0;
@@ -137,8 +68,11 @@ namespace NPuzzleAI
     {
         private int xLength;
         private int yLength;
+        //current board state
         public int[,] boardState;
+        //goal state generated based on the dimensions
         private int[,] goalState;
+        //reference to the heuristic function to be used
         private Func<int[,], int[,], int> heuristic;
 
         public Puzzle(int[,] boardState, Func<int[,], int[,], int> heuristic)
@@ -165,24 +99,28 @@ namespace NPuzzleAI
         {
             List<Puzzle> puzzles = new List<Puzzle>();
             int[] index = boardState.FindIndexOf(0);
+            //Gets child to the left if possible
             if(index[0] > 0)
             {
                 int[,] newBoardState = boardState.Clone() as int[,];
                 Extensions.Swap(ref newBoardState[index[0], index[1]], ref newBoardState[index[0] - 1, index[1]]);
                 puzzles.Add(new Puzzle(newBoardState, heuristic));
             }
+            //Gets child to the right if possible
             if(index[0] < xLength - 1)
             {
                 int[,] newBoardState = boardState.Clone() as int[,];
                 Extensions.Swap(ref newBoardState[index[0], index[1]], ref newBoardState[index[0] + 1, index[1]]);
                 puzzles.Add(new Puzzle(newBoardState, heuristic));
             }
+            //Gets child to the top if possible
             if(index[1] > 0)
             {
                 int[,] newBoardState = boardState.Clone() as int[,];
                 Extensions.Swap(ref newBoardState[index[0], index[1]], ref newBoardState[index[0], index[1] - 1]);
                 puzzles.Add(new Puzzle(newBoardState, heuristic));
             }
+            //Gets child to the bottom if possible
             if(index[1] < yLength - 1)
             {
                 int[,] newBoardState = boardState.Clone() as int[,];
@@ -193,6 +131,7 @@ namespace NPuzzleAI
             return puzzles.ToArray();
         }
 
+        //gets h(n)
         public int GetHeuristicValue()
         {
             return heuristic.Invoke(boardState, goalState);
@@ -219,6 +158,48 @@ namespace NPuzzleAI
 
                 Console.Write("\n");
             }
+        }
+    }
+
+    public static class Extensions
+    {
+        public static int[] FindIndexOf(this int[,] arr, int target)
+        {
+            for (int i = 0; i < arr.GetLength(0); ++i)
+            {
+                for (int j = 0; j < arr.GetLength(1); ++j)
+                {
+                    if (arr[i, j] == target)
+                    {
+                        return new int[] { i, j };
+                    }
+                }
+            }
+
+            return new int[] { -1, -1 };
+        }
+
+        public static void Swap<T>(ref T lhs, ref T rhs)
+        {
+            T temp;
+            temp = lhs;
+            lhs = rhs;
+            rhs = temp;
+        }
+
+        public static bool Compare(this int[,] arr, int[,] target)
+        {
+            bool equal = true;
+
+            for (int i = 0; i < arr.GetLength(0); ++i)
+            {
+                for (int j = 0; j < arr.GetLength(1); ++j)
+                {
+                    equal &= (arr[i, j] == target[i, j]);
+                }
+            }
+
+            return equal;
         }
     }
 
@@ -256,8 +237,14 @@ namespace NPuzzleAI
             return nodes.Count == 0;
         }
 
+        public int Size()
+        {
+            return nodes.Count;
+        }
+
         public void Enque(Node node)
         {
+            //checks if is in repeated states
             for (int i = 0; i < repeatedStates.Count; ++i)
             {
                 if (repeatedStates[i].Equals(node.puzzle))
@@ -270,6 +257,7 @@ namespace NPuzzleAI
 
             for (LinkedListNode<Node> val = nodes.First; val != null; val = val.Next)
             {
+                //Inserts the value in the priority que based on FIFO
                 if(val.Value.getWeight() > node.getWeight())
                 {
                     nodes.AddBefore(val, node);
@@ -295,6 +283,7 @@ namespace NPuzzleAI
         {
             int[,] puzzle = new int[3, 3];
 
+            //Start of program
             Prompt:
             Console.WriteLine("Welcome to Lorenzo Alamillo's 8-Puzzle Solver." +
                 "Type \"1\" to use a default puzzle, or \"2\" to enter your own puzzle");
@@ -303,9 +292,9 @@ namespace NPuzzleAI
             if(input.KeyChar == '1')
             {
                 puzzle = new int[3, 3] {
-                    { 0, 1, 3},
-                    { 4, 2, 5},
-                    { 7, 8, 6} };
+                    { 1, 2, 3},
+                    { 4, 0, 6},
+                    { 7, 5, 8} };
             }
             else if(input.KeyChar == '2')
             {
@@ -389,6 +378,8 @@ namespace NPuzzleAI
 
         public static void GeneralSearch(int[,] puzzle, Func<int[,], int[,], int> heuristic)
         {
+            int MaxQueueSize = 0;
+            int NodesExpanded = 0;
             PriorityQueue queue = new PriorityQueue();
             Puzzle initPuzzle = new Puzzle(puzzle, heuristic);
 
@@ -397,9 +388,15 @@ namespace NPuzzleAI
 
             while(true)
             {
+                MaxQueueSize = queue.Size() > MaxQueueSize ? queue.Size() : MaxQueueSize;
+
                 if(queue.Empty())
                 {
-                    return;
+                    Console.WriteLine("No solution found, Press any key to restart");
+                    Console.WriteLine($"Max Queue Size: {MaxQueueSize}");
+                    Console.WriteLine($"Nodes Expanded: {NodesExpanded}");
+                    Console.ReadKey(true);
+                    Program.Main(new string[] { });
                 }
 
                 Node node = queue.Dequeue();
@@ -409,11 +406,14 @@ namespace NPuzzleAI
                 if (node.puzzle.GoalStateFound())
                 {
                     Console.WriteLine("Goal State Found, Press any key to restart.");
+                    Console.WriteLine($"Max Queue Size: {MaxQueueSize}");
+                    Console.WriteLine($"Nodes Expanded: {NodesExpanded}");
                     Console.ReadKey(true);
                     Program.Main(new string[] { });
                 }
 
                 Puzzle[] children = node.puzzle.GetPossibleChildren();
+                NodesExpanded++;
                 for(int i = 0; i < children.Length; ++i)
                 {
                     queue.Enque(new Node(node.g + 1, children[i].GetHeuristicValue(), children[i]));
